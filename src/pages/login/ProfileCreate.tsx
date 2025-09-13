@@ -14,8 +14,8 @@ function ProfileCreate() {
         // use this to create a profile
     };
 
-    const returnToLogin = () => {
-        navigate('/');
+    const returnToSelect = () => {
+        navigate('/profiles');
     };
 
     return (
@@ -44,9 +44,9 @@ function ProfileCreate() {
             <button
                 id="profileCreation"
                 className="bg-primary w-40 text-lg rounded-md cursor-pointer mt-20 text-off-white hover:bg-accent-2"
-                onClick={returnToLogin}
+                onClick={returnToSelect}
             >
-                Return to login
+                Return to select
             </button>
         </main>
     );
