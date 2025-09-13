@@ -1,0 +1,11 @@
+@import 'tailwindcss';
+
+@theme {
+    --color-background: #221e41; /* Idea is to use this for the background*/
+    --color-primary: #3b3f88; /*Cards, buttons, panels*/
+    --color-secondary: #7089c1; /*Secondary text, outlines, hover*/
+    --color-accent-1: #c51c6d; /*Play buttons, active states, important highlights*/
+    --color-accent-2: #af2499; /*Alternate accent for hover or other highlights*/
+
+    --color-off-white: #e0e6f0; /*Not quite white so its easier on the eyes*/
+}
