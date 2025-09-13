@@ -1,16 +1,18 @@
-import { useState } from 'react';
-import { invoke } from '@tauri-apps/api/core';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import ProfileSelect from './pages/login/ProfileSelect';
+import ProfileCreate from './pages/login/ProfileCreate';
 
 function App() {
-    const [greetMsg, setGreetMsg] = useState('');
-    const [name, setName] = useState('');
-
-    async function greet() {
-        // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-        setGreetMsg(await invoke('greet', { name }));
-    }
-
-    return <main className="w-full h-dvh bg-slate-800"></main>;
+    return (
+        <main className="w-full h-svh bg-background">
+            <Router>
+                <Routes>
+                    <Route path="/" element={<ProfileSelect />} />
+                    <Route path="/create" element={<ProfileCreate />} />
+                </Routes>
+            </Router>
+        </main>
+    );
 }
 
 export default App;
