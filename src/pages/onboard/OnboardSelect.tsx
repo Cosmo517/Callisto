@@ -1,31 +1,29 @@
 import { useEffect, useState } from 'react';
-import { invoke } from "@tauri-apps/api/core";
+import { invoke } from '@tauri-apps/api/core';
 import { open } from '@tauri-apps/plugin-dialog';
 import { useNavigate } from 'react-router-dom';
 
 function OnboardSelect() {
     const navigate = useNavigate();
 
-    const [onboardOptions, setOnboardOption] = useState([
-        'Steam'
-    ]);
+    const [onboardOptions, setOnboardOption] = useState(['Steam']);
 
     async function selectSteamFolderAndOnboard() {
         const result = await open({
-            title: "Select your steamapps folder location",
+            title: 'Select your steamapps folder location',
             multiple: false,
             directory: true,
         });
 
         if (!result) {
-            console.log("No folder selected");
+            console.log('No folder selected');
             return;
         }
 
         // result might be an array on some platforms
         const steamPath = Array.isArray(result) ? result[0] : result;
-        console.log("Selected folder:", steamPath);
-        await invoke("onboard_steam", { steamPath: steamPath });
+        console.log('Selected folder:', steamPath);
+        await invoke('onboard_steam', { steamPath: steamPath });
     }
 
     const selectProfile = () => {

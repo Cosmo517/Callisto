@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useUser } from '../../common/UserContext';
 
 function ProfileSelect() {
     const navigate = useNavigate();
+    const { setUser } = useUser();
 
     const [userProfiles, setUserProfiles] = useState([
         'Cosmo',
@@ -15,12 +17,19 @@ function ProfileSelect() {
         // use this to call the rust backend to grab the user profiles
     }, []);
 
-    const profileSelected = () => {
-        // use this when a profile is selected
+    const profileSelected = (profile: string, index: number) => {
+        // Using hardcoded values for now
+        setUser({
+            id: index.toString(),
+            username: profile,
+            profile_picture: '',
+        });
+
+        navigate('/library');
     };
 
     const returnToOnboard = () => {
-        navigate("/")
+        navigate('/');
     };
 
     const createProfile = () => {
@@ -34,11 +43,11 @@ function ProfileSelect() {
                 Select a User Profile
             </div>
             <div className="grid grid-cols-1">
-                {userProfiles.map((profile, _) => (
+                {userProfiles.map((profile, index) => (
                     <button
                         id={profile}
                         className="bg-primary w-40 text-lg rounded-md cursor-pointer m-2 text-off-white hover:bg-accent-2"
-                        onClick={() => console.log('test')}
+                        onClick={() => profileSelected(profile, index)}
                     >
                         {profile}
                     </button>
@@ -52,7 +61,6 @@ function ProfileSelect() {
                 >
                     Create a profile
                 </button>
-                
             </div>
             <div>
                 <button

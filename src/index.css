@@ -2,6 +2,7 @@
 
 @theme {
     --color-background: #221e41; /* Idea is to use this for the background*/
+    --color-navbar-color: #16132a;
     --color-primary: #3b3f88; /*Cards, buttons, panels*/
     --color-secondary: #7089c1; /*Secondary text, outlines, hover*/
     --color-accent-1: #c51c6d; /*Play buttons, active states, important highlights*/
