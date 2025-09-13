@@ -19,6 +19,10 @@ function ProfileSelect() {
         // use this when a profile is selected
     };
 
+    const returnToOnboard = () => {
+        navigate("/")
+    };
+
     const createProfile = () => {
         // use this to create a profile
         navigate('/create');
@@ -43,10 +47,20 @@ function ProfileSelect() {
             <div>
                 <button
                     id="profileCreation"
-                    className="bg-primary w-40 text-lg rounded-md cursor-pointer mt-20 text-off-white hover:bg-accent-2"
+                    className="bg-primary w-40 text-lg rounded-md cursor-pointer mt-10 m-2 text-off-white hover:bg-accent-2"
                     onClick={createProfile}
                 >
                     Create a profile
+                </button>
+                
+            </div>
+            <div>
+                <button
+                    id="returnToOnboard"
+                    className="bg-primary w-40 text-lg rounded-md cursor-pointer m-2 text-off-white hover:bg-accent-2"
+                    onClick={returnToOnboard}
+                >
+                    Return to onboard
                 </button>
             </div>
         </main>
