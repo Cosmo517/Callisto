@@ -1,24 +1,10 @@
 mod database;
 use std::fs;
 use std::path::Path;
-use serde::Serialize;
-use rusqlite::{params, Connection, Result};
-
-#[derive(Serialize)]
-#[derive(Debug)]
-struct Game {
-    app_id: String,
-    name: String,
-    install_dir: String,
-    last_updated: String,
-    last_played: String,
-    last_owner: String,
-    manifest: String,
-    size: String,
-}
+use rusqlite::{Result};
 
 #[tauri::command]
-fn onboard_steam(steam_path: String) -> Result<Vec<Game>, String> {
+fn onboard_steam(steam_path: String) -> Result<Vec<database::db::Game>, String> {
     let path = Path::new(&steam_path);
     if !path.exists() {
         return Err(format!("Path does not exist: {}", steam_path));
@@ -71,7 +57,7 @@ fn onboard_steam(steam_path: String) -> Result<Vec<Game>, String> {
                                 manifest = "test".to_string();
 
                                 if !name.is_empty() {
-                                    let game = Game {
+                                    let game = database::db::Game {
                                         app_id,
                                         name,
                                         install_dir,
@@ -108,6 +94,17 @@ fn onboard_steam(steam_path: String) -> Result<Vec<Game>, String> {
     Ok(games)
 }
 
+#[tauri::command]
+fn tauri_create_user(username: String, profile_picture: Option<String>) -> Result<bool, String> {
+    database::db::create_user(&username, profile_picture.as_deref())
+        .map_err(|e| format!("Database error: {}", e))
+}
+
+#[tauri::command]
+fn tauri_get_all_users() -> Result<Vec<database::db::User>, String> {
+    database::db::get_all_users().map_err(|e| e.to_string())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let db_conn = database::db::init_db().expect("failed to init database");
@@ -116,7 +113,7 @@ pub fn run() {
     .manage(db_conn)
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
-        .invoke_handler(tauri::generate_handler![onboard_steam])
+        .invoke_handler(tauri::generate_handler![onboard_steam, tauri_create_user, tauri_get_all_users])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
