@@ -4,20 +4,36 @@ import ProfileCreate from './pages/login/ProfileCreate';
 import { UserProvider } from './common/UserContext';
 import Library from './pages/library/Library';
 import OnboardSelect from './pages/onboard/OnboardSelect';
+import { PageProvider } from './common/PageContext';
+import Screenshots from './pages/screenshots/Screenshots';
+import Statistics from './pages/statistics/Statistics';
 
 function App() {
     return (
         <UserProvider>
-            <main className="w-full h-svh bg-background">
-                <Router>
-                    <Routes>
-                        <Route path="/" element={<OnboardSelect />} />
-                        <Route path="/profiles" element={<ProfileSelect />} />
-                        <Route path="/create" element={<ProfileCreate />} />
-                        <Route path="/library" element={<Library />} />
-                    </Routes>
-                </Router>
-            </main>
+            <PageProvider>
+                <main className="w-full h-svh bg-background">
+                    <Router>
+                        <Routes>
+                            <Route path="/" element={<OnboardSelect />} />
+                            <Route
+                                path="/profiles"
+                                element={<ProfileSelect />}
+                            />
+                            <Route path="/create" element={<ProfileCreate />} />
+                            <Route path="/library" element={<Library />} />
+                            <Route
+                                path="/screenshots"
+                                element={<Screenshots />}
+                            />
+                            <Route
+                                path="/statistics"
+                                element={<Statistics />}
+                            />
+                        </Routes>
+                    </Router>
+                </main>
+            </PageProvider>
         </UserProvider>
     );
 }
