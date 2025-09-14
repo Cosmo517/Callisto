@@ -1,7 +1,7 @@
-use rusqlite::{Connection, Result};
+use rusqlite::{params, Connection, Result};
 
 pub fn init_db() -> Result<()> {
-    let conn = Connection::open("./src/data/data.db")?;
+    let conn = Connection::open("../data/data.db")?;
     
     // User
     conn.execute(
@@ -40,5 +40,26 @@ pub fn init_db() -> Result<()> {
         (),
     )?;
 
+    Ok(())
+}
+
+pub fn insert_game(
+    app_id: &str,
+    name: &str,
+    install_dir: &str,
+    last_updated: &str,
+    last_played: &str,
+    last_owner: &str,
+    manifest: &str,
+    size: &str,
+) -> Result<()> {
+    let conn = Connection::open("../data/data.db")?;
+
+    conn.execute(
+        "INSERT OR REPLACE INTO Game (
+            app_id, name, install_dir, last_updated, last_played, last_owner, manifest, size
+        ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
+        params![app_id, name, install_dir, last_updated, last_played, last_owner, manifest, size],
+    )?;
     Ok(())
 }
