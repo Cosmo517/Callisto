@@ -2,6 +2,7 @@ mod database;
 use std::fs;
 use std::path::Path;
 use serde::Serialize;
+use rusqlite::{params, Connection, Result};
 
 #[derive(Serialize)]
 #[derive(Debug)]
@@ -12,7 +13,7 @@ struct Game {
     last_updated: String,
     last_played: String,
     last_owner: String,
-    manifest: Option<String>,
+    manifest: String,
     size: String,
 }
 
@@ -40,6 +41,7 @@ fn onboard_steam(steam_path: String) -> Result<Vec<Game>, String> {
                                 let mut last_played = String::new();
                                 let mut last_owner = String::new();
                                 let mut size = String::new();
+                                let mut manifest = String::new();
 
                                 for line in contents.lines() {
                                     let line = line.trim_start();
@@ -66,6 +68,8 @@ fn onboard_steam(steam_path: String) -> Result<Vec<Game>, String> {
                                     }
                                 }
 
+                                manifest = "test".to_string();
+
                                 if !name.is_empty() {
                                     let game = Game {
                                         app_id,
@@ -74,9 +78,21 @@ fn onboard_steam(steam_path: String) -> Result<Vec<Game>, String> {
                                         last_updated,
                                         last_played,
                                         last_owner,
-                                        manifest: Some(file_path.to_string_lossy().to_string()),
+                                        manifest,
                                         size,
                                     };
+
+                                    database::db::insert_game(
+                                        &game.app_id,
+                                        &game.name,
+                                        &game.install_dir,
+                                        &game.last_updated,
+                                        &game.last_played,
+                                        &game.last_owner,
+                                        &game.manifest,
+                                        &game.size,
+                                    ).map_err(|e| e.to_string())?;
+
                                     println!("{:?}", game);
                                     games.push(game);
                                 }
