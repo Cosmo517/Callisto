@@ -63,3 +63,47 @@ pub fn insert_game(
     )?;
     Ok(())
 }
+
+#[derive(Debug)]
+pub struct Game {
+    app_id: i32,
+    name: String,
+    install_dir: Option<String>,
+    last_updated: Option<String>,
+    last_played: Option<String>,
+    last_owner: Option<String>,
+    manifest: Option<String>,
+    size: Option<i64>,
+}
+
+pub fn retrieve_games(user_id: i32) -> Result<Vec<Game>> {
+    let conn = Connection::open("../data/data.db")?;
+
+    let mut stmt = conn.prepare(
+        "SELECT g.app_id, g.name, g.install_dir, g.last_updated, g.last_played, 
+                g.last_owner, g.manifest, g.size
+         FROM Game g
+         JOIN User_Games ug ON g.app_id = ug.app_id
+         WHERE ug.user_id = ?1"
+    )?;
+
+    let games_iter = stmt.query_map(params![user_id], |row| {
+        Ok(Game {
+            app_id: row.get(0)?,
+            name: row.get(1)?,
+            install_dir: row.get(2)?,
+            last_updated: row.get(3)?,
+            last_played: row.get(4)?,
+            last_owner: row.get(5)?,
+            manifest: row.get(6)?,
+            size: row.get(7)?,
+        })
+    })?;
+
+    let mut games = Vec::new();
+    for game in games_iter {
+        games.push(game?);
+    }
+
+    Ok(games)
+}
