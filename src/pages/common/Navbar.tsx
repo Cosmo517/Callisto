@@ -12,19 +12,33 @@ function Navbar() {
     const [open, setOpen] = useState(false);
 
     const navigateToPage = (selectedPage: string) => {
-        if (selectedPage === 'Library' && page.page != 'Library') {
+        if (selectedPage === 'library' && page.page != 'library') {
             navigate('/library');
-            setPage({ page: 'Library' });
+            setPage({ page: 'library' });
         } else if (
-            selectedPage === 'Screenshots' &&
-            page.page != 'Screenshots'
+            selectedPage === 'screenshots' &&
+            page.page != 'screenshots'
         ) {
             navigate('/screenshots');
-            setPage({ page: 'Screenshots' });
-        } else if (selectedPage === 'Statistics' && page.page != 'Statistics') {
+            setPage({ page: 'screenshots' });
+        } else if (selectedPage === 'statistics' && page.page != 'statistics') {
             navigate('/statistics');
-            setPage({ page: 'Statistics' });
+            setPage({ page: 'statistics' });
         }
+    };
+
+    const returnToProfileSelect = () => {
+        navigate('/profiles');
+    };
+
+    const navigateToProfileSettings = () => {
+        setPage({ page: 'profile_settings' });
+        navigate('/profile_settings');
+    };
+
+    const navigateToSettings = () => {
+        setPage({ page: 'settings' });
+        navigate('/settings');
     };
 
     return (
@@ -33,33 +47,33 @@ function Navbar() {
                 <button
                     className={clsx(
                         'ml-4 cursor-pointer underline-offset-8 hover:underline',
-                        page.page === 'Library'
+                        page.page === 'library'
                             ? 'text-accent-1 underline underline-offset-8'
                             : 'text-off-white'
                     )}
-                    onClick={() => navigateToPage('Library')}
+                    onClick={() => navigateToPage('library')}
                 >
                     Library
                 </button>
                 <button
                     className={clsx(
                         'cursor-pointer underline-offset-8 hover:underline',
-                        page.page === 'Screenshots'
+                        page.page === 'screenshots'
                             ? 'text-accent-1 underline underline-offset-8'
                             : 'text-off-white'
                     )}
-                    onClick={() => navigateToPage('Screenshots')}
+                    onClick={() => navigateToPage('screenshots')}
                 >
                     Screenshots
                 </button>
                 <button
                     className={clsx(
                         'cursor-pointer underline-offset-8 hover:underline',
-                        page.page === 'Statistics'
+                        page.page === 'statistics'
                             ? 'text-accent-1 underline underline-offset-8'
                             : 'text-off-white'
                     )}
-                    onClick={() => navigateToPage('Statistics')}
+                    onClick={() => navigateToPage('statistics')}
                 >
                     Statistics
                 </button>
@@ -74,13 +88,22 @@ function Navbar() {
 
                 {open && (
                     <div className="bg-primary border-secondary absolute right-0 z-50 mt-2 w-48 rounded-md border shadow-lg">
-                        <button className="text-off-white hover:bg-accent-2 block w-full px-4 py-2 text-left">
+                        <button
+                            className="text-off-white hover:bg-accent-2 block w-full cursor-pointer px-4 py-2 text-left"
+                            onClick={navigateToProfileSettings}
+                        >
                             Profile
                         </button>
-                        <button className="text-off-white hover:bg-accent-2 block w-full px-4 py-2 text-left">
+                        <button
+                            className="text-off-white hover:bg-accent-2 block w-full cursor-pointer px-4 py-2 text-left"
+                            onClick={navigateToSettings}
+                        >
                             Settings
                         </button>
-                        <button className="text-off-white hover:bg-accent-2 block w-full px-4 py-2 text-left">
+                        <button
+                            className="text-off-white hover:bg-accent-2 block w-full cursor-pointer px-4 py-2 text-left"
+                            onClick={returnToProfileSelect}
+                        >
                             Logout
                         </button>
                     </div>

@@ -1,17 +1,8 @@
-import { useNavigate } from 'react-router-dom';
-import { useUser } from '../../common/UserContext';
 import Navbar from '../common/Navbar';
 import { useState } from 'react';
 
 function Library() {
-    const navigate = useNavigate();
-    const { user } = useUser();
-
     const [games, setGames] = useState(['Game 1', 'Game 2', 'Game 3']);
-
-    const returnToProfileSelect = () => {
-        navigate('/profiles');
-    };
 
     return (
         <div className="bg-background flex min-h-screen flex-col">
@@ -25,7 +16,9 @@ function Library() {
                         <button
                             id={game}
                             className="bg-primary text-off-white hover:bg-accent-2 m-5 h-96 w-60 cursor-pointer rounded-md text-lg"
-                            onClick={returnToProfileSelect}
+                            onClick={() =>
+                                console.log('Game: ' + index + ' clicked')
+                            }
                         >
                             Play
                         </button>
