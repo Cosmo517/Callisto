@@ -7,12 +7,14 @@ import OnboardSelect from './pages/onboard/OnboardSelect';
 import { PageProvider } from './common/PageContext';
 import Screenshots from './pages/screenshots/Screenshots';
 import Statistics from './pages/statistics/Statistics';
+import ProfileSettings from './pages/profile/ProfileSettings';
+import Settings from './pages/settings/Settings';
 
 function App() {
     return (
         <UserProvider>
             <PageProvider>
-                <main className="w-full h-svh bg-background">
+                <main className="bg-background h-svh w-full">
                     <Router>
                         <Routes>
                             <Route path="/" element={<OnboardSelect />} />
@@ -30,6 +32,11 @@ function App() {
                                 path="/statistics"
                                 element={<Statistics />}
                             />
+                            <Route
+                                path="/profile_settings"
+                                element={<ProfileSettings />}
+                            />
+                            <Route path="/settings" element={<Settings />} />
                         </Routes>
                     </Router>
                 </main>
