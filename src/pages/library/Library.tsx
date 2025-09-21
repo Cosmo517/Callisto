@@ -1,24 +1,22 @@
+import { invoke } from '@tauri-apps/api/core';
 import Navbar from '../common/Navbar';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import GameCard from './components/GameCard';
 import AddGame from './components/AddGame';
+import { useUser } from '../../common/UserContext';
+import { Game } from '../../common/interfaces/GameInterface';
 
 function Library() {
-    const [games, setGames] = useState([
-        'Game 1',
-        'Game 2',
-        'Game 3',
-        'Game 4',
-        'Game 5',
-        'Game 6',
-        'Game 7',
-        'Game 8',
-        'Game 9',
-        'Game 10',
-        'Game 11',
-    ]);
+    const [games, setGames] = useState<Game[]>([]);
+    const { user } = useUser();
 
     const [addGameDialog, setAddGameDialog] = useState(false);
+
+    useEffect(() => {
+        invoke<Game[]>('tauri_retrieve_user_games', { userId: Number(user.id) })
+            .then((data) => setGames(data))
+            .catch((err) => console.error('Error fetching users:', err));
+    }, []);
 
     return (
         <div className="bg-background flex min-h-screen flex-col">

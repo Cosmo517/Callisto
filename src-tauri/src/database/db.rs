@@ -46,14 +46,14 @@ pub fn init_db() -> Result<()> {
 }
 
 pub fn insert_game(
-    app_id: &str,
+    app_id: i64,
     name: &str,
     install_dir: &str,
     last_updated: &str,
     last_played: &str,
     last_owner: &str,
     manifest: &str,
-    size: &str,
+    size: i64,
 ) -> Result<()> {
     let conn = Connection::open("../data/data.db")?;
 
@@ -68,14 +68,14 @@ pub fn insert_game(
 
 #[derive(Debug, Serialize)]
 pub struct Game {
-    pub app_id: String,
+    pub app_id: i64,
     pub name: String,
     pub install_dir: String,
     pub last_updated: String,
     pub last_played: String,
     pub last_owner: String,
     pub manifest: String,
-    pub size: String,
+    pub size: i64,
 }
 
 
@@ -161,4 +161,33 @@ pub fn get_all_users() -> Result<Vec<User>> {
     }
 
     Ok(users)
+}
+
+pub fn get_all_games() -> Result<Vec<Game>> {
+    let conn = Connection::open("../data/data.db")?;
+
+    let mut result = conn.prepare(
+        "SELECT * from Game"
+    )?;
+
+    
+    let game_iter = result.query_map([],|row| {
+        Ok(Game {
+            app_id: row.get(0)?,
+            name: row.get(1)?,
+            install_dir: row.get(2)?,
+            last_updated: row.get(3)?,
+            last_played: row.get(4)?,
+            last_owner: row.get(5)?,
+            manifest: row.get(6)?,
+            size: row.get(7)?,
+        })
+    })?;
+
+    let mut games = Vec::new();
+    for game in game_iter {
+        games.push(game?);
+    }
+
+    Ok(games)
 }

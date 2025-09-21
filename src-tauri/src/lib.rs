@@ -20,19 +20,19 @@ fn onboard_steam(steam_path: String) -> Result<Vec<database::db::Game>, String> 
                     if let Some(ext) = file_path.extension() {
                         if ext == "acf" {
                             if let Ok(contents) = fs::read_to_string(&file_path) {
-                                let mut app_id = String::new();
+                                let mut app_id_str = String::new();
                                 let mut name = String::new();
                                 let mut install_dir = String::new();
                                 let mut last_updated = String::new();
                                 let mut last_played = String::new();
                                 let mut last_owner = String::new();
-                                let mut size = String::new();
+                                let mut size_str = String::new();
                                 let mut manifest = String::new();
 
                                 for line in contents.lines() {
                                     let line = line.trim_start();
                                     if line.starts_with("\"appid\"") {
-                                        app_id = line.split('"').nth(3).unwrap_or_default().to_string();
+                                        app_id_str = line.split('"').nth(3).unwrap_or_default().to_string();
                                     }
                                     if line.starts_with("\"name\"") {
                                         name = line.split('"').nth(3).unwrap_or_default().to_string();
@@ -50,13 +50,16 @@ fn onboard_steam(steam_path: String) -> Result<Vec<database::db::Game>, String> 
                                         last_owner = line.split('"').nth(3).unwrap_or_default().to_string();
                                     }
                                     if line.starts_with("\"SizeOnDisk\"") {
-                                        size = line.split('"').nth(3).unwrap_or_default().to_string();
+                                        size_str = line.split('"').nth(3).unwrap_or_default().to_string();
                                     }
                                 }
 
                                 manifest = "test".to_string();
 
                                 if !name.is_empty() {
+                                    let app_id: i64 = app_id_str.parse::<i64>().unwrap_or(0);
+                                    let size: i64 = size_str.parse::<i64>().unwrap_or(0);
+
                                     let game = database::db::Game {
                                         app_id,
                                         name,
@@ -69,14 +72,14 @@ fn onboard_steam(steam_path: String) -> Result<Vec<database::db::Game>, String> 
                                     };
 
                                     database::db::insert_game(
-                                        &game.app_id,
+                                        game.app_id,
                                         &game.name,
                                         &game.install_dir,
                                         &game.last_updated,
                                         &game.last_played,
                                         &game.last_owner,
                                         &game.manifest,
-                                        &game.size,
+                                        game.size,
                                     ).map_err(|e| e.to_string())?;
 
                                     println!("{:?}", game);
@@ -105,6 +108,23 @@ fn tauri_get_all_users() -> Result<Vec<database::db::User>, String> {
     database::db::get_all_users().map_err(|e| e.to_string())
 }
 
+#[tauri::command]
+fn tauri_retrieve_user_games(user_id: i32) -> Result<Vec<crate::database::db::Game>, String> {
+    match crate::database::db::retrieve_games(user_id) {
+        Ok(games) => Ok(games),
+        Err(e) => Err(format!("Failed to retrieve games: {}", e)),
+    }
+}
+
+#[tauri::command]
+fn tauri_retrieve_all_games() -> Result<Vec<crate::database::db::Game>, String> {
+    match crate::database::db::get_all_games() {
+        Ok(games) => Ok(games),
+        Err(e) => Err(format!("Failed to retrieve games: {}", e)),
+    }
+}
+
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let db_conn = database::db::init_db().expect("failed to init database");
@@ -113,7 +133,7 @@ pub fn run() {
     .manage(db_conn)
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
-        .invoke_handler(tauri::generate_handler![onboard_steam, tauri_create_user, tauri_get_all_users])
+        .invoke_handler(tauri::generate_handler![onboard_steam, tauri_create_user, tauri_get_all_users, tauri_retrieve_user_games, tauri_retrieve_all_games])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

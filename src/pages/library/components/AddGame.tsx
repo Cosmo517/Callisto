@@ -1,4 +1,7 @@
-import { useState } from 'react';
+import { invoke } from '@tauri-apps/api/core';
+import { Game } from '../../../common/interfaces/GameInterface';
+import { useEffect, useState } from 'react';
+
 import {
     Dialog,
     DialogBackdrop,
@@ -12,9 +15,21 @@ interface AddGameDialogProps {
 }
 
 import { ExclamationTriangleIcon } from '@heroicons/react/24/outline';
+import GameTable from './GameTable';
 
 function AddGame({ open, onClose }: AddGameDialogProps) {
     if (!open) return null;
+
+    const [games, setGames] = useState<Game[]>([]);
+
+    useEffect(() => {
+        invoke<Game[]>('tauri_retrieve_all_games')
+            .then((data) => {
+                setGames(data);
+                console.log(data);
+            })
+            .catch((err) => console.error('Error fetching users:', err));
+    }, []);
 
     return (
         <div>
@@ -24,11 +39,11 @@ function AddGame({ open, onClose }: AddGameDialogProps) {
                     className="fixed inset-0 bg-gray-900/50 transition-opacity data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in"
                 />
 
-                <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
+                <div className="fixed inset-0 z-10 w-full overflow-y-auto">
                     <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
                         <DialogPanel
                             transition
-                            className="relative transform overflow-hidden rounded-lg bg-gray-800 text-left shadow-xl outline -outline-offset-1 outline-white/10 transition-all data-closed:translate-y-4 data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in sm:my-8 sm:w-full sm:max-w-lg data-closed:sm:translate-y-0 data-closed:sm:scale-95"
+                            className="relative transform overflow-hidden rounded-lg bg-gray-800 text-left shadow-xl outline -outline-offset-1 outline-white/10 transition-all data-closed:translate-y-4 data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in sm:my-8 sm:w-full sm:max-w-6xl data-closed:sm:translate-y-0 data-closed:sm:scale-95"
                         >
                             <div className="bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                                 <div className="sm:flex sm:items-start">
@@ -38,7 +53,7 @@ function AddGame({ open, onClose }: AddGameDialogProps) {
                                             className="size-6 text-red-400"
                                         />
                                     </div>
-                                    <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                                    <div className="mt-3 w-full text-center sm:mt-0 sm:ml-4 sm:text-left">
                                         <DialogTitle
                                             as="h3"
                                             className="text-base font-semibold text-white"
@@ -46,14 +61,23 @@ function AddGame({ open, onClose }: AddGameDialogProps) {
                                             Choose the games you want to add to
                                             your profile
                                         </DialogTitle>
-                                        <div className="mt-2">
-                                            <p className="text-sm text-gray-400">
-                                                The games will be listed here
-                                            </p>
+
+                                        {/* ✅ Scrollable area for the table */}
+                                        <div className="mt-4 max-h-[70vh] overflow-y-auto rounded-lg border border-gray-700 p-2">
+                                            <GameTable
+                                                games={games}
+                                                onRowClick={(g) =>
+                                                    console.log(
+                                                        'clicked',
+                                                        g.app_id
+                                                    )
+                                                }
+                                            />
                                         </div>
                                     </div>
                                 </div>
                             </div>
+
                             <div className="bg-gray-700/25 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
                                 <button
                                     type="button"
