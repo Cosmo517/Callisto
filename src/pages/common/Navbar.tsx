@@ -42,7 +42,7 @@ function Navbar() {
     };
 
     return (
-        <div className="bg-navbar-color border-b-secondary flex h-18 w-full items-center border text-xl">
+        <div className="bg-navbar-color border-b-secondary fixed flex h-18 w-full items-center border text-xl">
             <div className="flex flex-row gap-6">
                 <button
                     className={clsx(
