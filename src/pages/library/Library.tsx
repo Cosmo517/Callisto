@@ -14,7 +14,10 @@ function Library() {
 
     useEffect(() => {
         invoke<Game[]>('tauri_retrieve_user_games', { userId: Number(user.id) })
-            .then((data) => setGames(data))
+            .then((data) => {
+                console.log(data);
+                setGames(data);
+            })
             .catch((err) => console.error('Error fetching users:', err));
     }, []);
 

@@ -1,6 +1,7 @@
 import { invoke } from '@tauri-apps/api/core';
 import { Game } from '../../../common/interfaces/GameInterface';
 import { useEffect, useState } from 'react';
+import { Selection } from '@react-types/shared';
 
 import {
     Dialog,
@@ -16,11 +17,14 @@ interface AddGameDialogProps {
 
 import { ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import GameTable from './GameTable';
+import { useUser } from '../../../common/UserContext';
 
 function AddGame({ open, onClose }: AddGameDialogProps) {
     if (!open) return null;
 
     const [games, setGames] = useState<Game[]>([]);
+    const [selectedGames, setSelectedGames] = useState<Selection>(new Set());
+    const { user } = useUser();
 
     useEffect(() => {
         invoke<Game[]>('tauri_retrieve_all_games')
@@ -30,6 +34,22 @@ function AddGame({ open, onClose }: AddGameDialogProps) {
             })
             .catch((err) => console.error('Error fetching users:', err));
     }, []);
+
+    const onSubmit = async () => {
+        const ids = Array.from(selectedGames).map((id) =>
+            parseInt(id as string, 10)
+        );
+        try {
+            await invoke('tauri_add_user_games', {
+                userId: Number(user.id),
+                gameIds: ids,
+            });
+            onClose();
+            console.log('Games added successfully!');
+        } catch (err) {
+            console.error('Failed to add games:', err);
+        }
+    };
 
     return (
         <div>
@@ -62,10 +82,13 @@ function AddGame({ open, onClose }: AddGameDialogProps) {
                                             your profile
                                         </DialogTitle>
 
-                                        {/* ✅ Scrollable area for the table */}
-                                        <div className="mt-4 max-h-[70vh] overflow-y-auto rounded-lg border border-gray-700 p-2">
+                                        <div className="mt-4 max-h-[70vh] overflow-y-auto rounded-lg p-2">
                                             <GameTable
                                                 games={games}
+                                                selectedGames={selectedGames}
+                                                setSelectedGames={
+                                                    setSelectedGames
+                                                }
                                                 onRowClick={(g) =>
                                                     console.log(
                                                         'clicked',
@@ -81,7 +104,7 @@ function AddGame({ open, onClose }: AddGameDialogProps) {
                             <div className="bg-gray-700/25 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
                                 <button
                                     type="button"
-                                    onClick={onClose}
+                                    onClick={() => onSubmit()}
                                     className="bg-accent-1 inline-flex w-full justify-center rounded-md px-3 py-2 text-sm font-semibold text-white hover:bg-red-400 sm:ml-3 sm:w-auto"
                                 >
                                     Add games

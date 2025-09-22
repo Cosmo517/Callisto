@@ -2,6 +2,7 @@ mod database;
 use std::fs;
 use std::path::Path;
 use rusqlite::{Result};
+use crate::database::db::add_user_games;
 
 #[tauri::command]
 fn onboard_steam(steam_path: String) -> Result<Vec<database::db::Game>, String> {
@@ -124,6 +125,13 @@ fn tauri_retrieve_all_games() -> Result<Vec<crate::database::db::Game>, String> 
     }
 }
 
+#[tauri::command]
+fn tauri_add_user_games(user_id: i32, game_ids: Vec<i32>) -> Result<(), String> {
+    crate::database::db::add_user_games(user_id, &game_ids)
+        .map_err(|e| format!("Failed to insert user games: {}", e))?;
+
+    Ok(())
+}
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -133,7 +141,7 @@ pub fn run() {
     .manage(db_conn)
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
-        .invoke_handler(tauri::generate_handler![onboard_steam, tauri_create_user, tauri_get_all_users, tauri_retrieve_user_games, tauri_retrieve_all_games])
+        .invoke_handler(tauri::generate_handler![onboard_steam, tauri_create_user, tauri_get_all_users, tauri_retrieve_user_games, tauri_retrieve_all_games, tauri_add_user_games])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

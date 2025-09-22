@@ -191,3 +191,19 @@ pub fn get_all_games() -> Result<Vec<Game>> {
 
     Ok(games)
 }
+
+pub fn add_user_games(user_id: i32, game_ids: &[i32]) -> Result<()> {
+    let mut conn = Connection::open("../data/data.db")?;
+
+    let tx = conn.transaction()?;
+
+    for app_id in game_ids {
+        tx.execute(
+            "INSERT OR IGNORE INTO User_Games (user_id, app_id) VALUES (?1, ?2)",
+            params![user_id, app_id],
+        )?;
+    }
+
+    tx.commit()?;
+    Ok(())
+}
