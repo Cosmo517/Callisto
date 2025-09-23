@@ -1,11 +1,11 @@
 type GameCardProps = {
-    game: any;
+    game: { name: string; app_id: number };
     index: number;
 };
 
 function GameCard({ game, index }: GameCardProps) {
     const playGame = () => {
-        // use this to start/do something for a game
+        window.location.href = `steam://launch/${game.app_id}`;
     };
 
     return (
