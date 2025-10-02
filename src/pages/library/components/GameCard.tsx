@@ -1,11 +1,13 @@
+import { invoke } from '@tauri-apps/api/core';
+
 type GameCardProps = {
-    game: { name: string; app_id: number };
+    game: any;
     index: number;
 };
 
 function GameCard({ game, index }: GameCardProps) {
     const playGame = () => {
-        window.location.href = `steam://launch/${game.app_id}`;
+        invoke('launch_steam_game', { appId: game.app_id.toString() });
     };
 
     return (

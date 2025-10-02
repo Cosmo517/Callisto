@@ -99,6 +99,37 @@ fn onboard_steam(steam_path: String) -> Result<Vec<database::db::Game>, String> 
 }
 
 #[tauri::command]
+fn launch_steam_game(app_id: String) -> Result<(), String> {
+    let uri = format!("steam://launch/{}", app_id);
+    
+    #[cfg(target_os = "windows")]
+    {
+        std::process::Command::new("cmd")
+            .args(["/C", "start", "", &uri])
+            .spawn()
+            .map_err(|e| e.to_string())?;
+    }
+    
+    #[cfg(target_os = "macos")]
+    {
+        std::process::Command::new("open")
+            .arg(&uri)
+            .spawn()
+            .map_err(|e| e.to_string())?;
+    }
+    
+    #[cfg(target_os = "linux")]
+    {
+        std::process::Command::new("xdg-open")
+            .arg(&uri)
+            .spawn()
+            .map_err(|e| e.to_string())?;
+    }
+    
+    Ok(())
+}
+
+#[tauri::command]
 fn tauri_create_user(username: String, profile_picture: Option<String>) -> Result<bool, String> {
     database::db::create_user(&username, profile_picture.as_deref())
         .map_err(|e| format!("Database error: {}", e))
@@ -141,7 +172,7 @@ pub fn run() {
     .manage(db_conn)
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
-        .invoke_handler(tauri::generate_handler![onboard_steam, tauri_create_user, tauri_get_all_users, tauri_retrieve_user_games, tauri_retrieve_all_games, tauri_add_user_games])
+        .invoke_handler(tauri::generate_handler![onboard_steam, launch_steam_game, tauri_create_user, tauri_get_all_users, tauri_retrieve_user_games, tauri_retrieve_all_games, tauri_add_user_games])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
