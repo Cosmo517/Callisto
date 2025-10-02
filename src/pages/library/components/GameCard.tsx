@@ -1,3 +1,5 @@
+import { invoke } from '@tauri-apps/api/core';
+
 type GameCardProps = {
     game: any;
     index: number;
@@ -5,7 +7,7 @@ type GameCardProps = {
 
 function GameCard({ game, index }: GameCardProps) {
     const playGame = () => {
-        // use this to start/do something for a game
+        invoke('launch_steam_game', { appId: game.app_id.toString() });
     };
 
     return (
