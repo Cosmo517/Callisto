@@ -1,4 +1,6 @@
 import { Game } from '../../../common/interfaces/GameInterface';
+import { Command } from '@tauri-apps/plugin-shell';
+
 import {
     Cell,
     Column,
@@ -6,7 +8,6 @@ import {
     Table,
     TableBody,
     TableHeader,
-    Checkbox,
 } from 'react-aria-components';
 
 type GamesListViewProps = {
@@ -32,6 +33,14 @@ function convertToTime(last_played?: string): string {
 }
 
 function GamesListView({ games }: GamesListViewProps) {
+    const playGame = async (appId: number) => {
+        const command = new Command('powershell', [
+            'start',
+            `steam://launch/${appId}`,
+        ]);
+        await command.spawn();
+    };
+
     return (
         <div className="flex justify-center">
             <Table
@@ -52,7 +61,15 @@ function GamesListView({ games }: GamesListViewProps) {
                             id={game.app_id}
                             className="odd:bg-[#23244f] even:bg-[#26264f]"
                         >
-                            <Cell>Play</Cell>
+                            <Cell>
+                                {' '}
+                                <button
+                                    className="bg-accent-2 my-1 w-20 cursor-pointer rounded-md"
+                                    onClick={() => playGame(game.app_id)}
+                                >
+                                    Play
+                                </button>
+                            </Cell>
                             <Cell>{game.name}</Cell>
                             <Cell>{convertToTime(game.last_played)}</Cell>
                         </Row>

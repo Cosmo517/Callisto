@@ -1,8 +1,8 @@
 mod database;
+use crate::database::db::add_user_games;
+use rusqlite::Result;
 use std::fs;
 use std::path::Path;
-use rusqlite::{Result};
-use crate::database::db::add_user_games;
 
 #[tauri::command]
 fn onboard_steam(steam_path: String) -> Result<Vec<database::db::Game>, String> {
@@ -33,25 +33,32 @@ fn onboard_steam(steam_path: String) -> Result<Vec<database::db::Game>, String> 
                                 for line in contents.lines() {
                                     let line = line.trim_start();
                                     if line.starts_with("\"appid\"") {
-                                        app_id_str = line.split('"').nth(3).unwrap_or_default().to_string();
+                                        app_id_str =
+                                            line.split('"').nth(3).unwrap_or_default().to_string();
                                     }
                                     if line.starts_with("\"name\"") {
-                                        name = line.split('"').nth(3).unwrap_or_default().to_string();
+                                        name =
+                                            line.split('"').nth(3).unwrap_or_default().to_string();
                                     }
                                     if line.starts_with("\"installdir\"") {
-                                        install_dir = line.split('"').nth(3).unwrap_or_default().to_string();
+                                        install_dir =
+                                            line.split('"').nth(3).unwrap_or_default().to_string();
                                     }
                                     if line.starts_with("\"LastUpdated\"") {
-                                        last_updated = line.split('"').nth(3).unwrap_or_default().to_string();
+                                        last_updated =
+                                            line.split('"').nth(3).unwrap_or_default().to_string();
                                     }
                                     if line.starts_with("\"LastPlayed\"") {
-                                        last_played = line.split('"').nth(3).unwrap_or_default().to_string();
+                                        last_played =
+                                            line.split('"').nth(3).unwrap_or_default().to_string();
                                     }
                                     if line.starts_with("\"LastOwner\"") {
-                                        last_owner = line.split('"').nth(3).unwrap_or_default().to_string();
+                                        last_owner =
+                                            line.split('"').nth(3).unwrap_or_default().to_string();
                                     }
                                     if line.starts_with("\"SizeOnDisk\"") {
-                                        size_str = line.split('"').nth(3).unwrap_or_default().to_string();
+                                        size_str =
+                                            line.split('"').nth(3).unwrap_or_default().to_string();
                                     }
                                 }
 
@@ -81,7 +88,8 @@ fn onboard_steam(steam_path: String) -> Result<Vec<database::db::Game>, String> 
                                         &game.last_owner,
                                         &game.manifest,
                                         game.size,
-                                    ).map_err(|e| e.to_string())?;
+                                    )
+                                    .map_err(|e| e.to_string())?;
 
                                     println!("{:?}", game);
                                     games.push(game);
@@ -138,10 +146,18 @@ pub fn run() {
     let db_conn = database::db::init_db().expect("failed to init database");
 
     tauri::Builder::default()
-    .manage(db_conn)
+        .plugin(tauri_plugin_shell::init())
+        .manage(db_conn)
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
-        .invoke_handler(tauri::generate_handler![onboard_steam, tauri_create_user, tauri_get_all_users, tauri_retrieve_user_games, tauri_retrieve_all_games, tauri_add_user_games])
+        .invoke_handler(tauri::generate_handler![
+            onboard_steam,
+            tauri_create_user,
+            tauri_get_all_users,
+            tauri_retrieve_user_games,
+            tauri_retrieve_all_games,
+            tauri_add_user_games
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

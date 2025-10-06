@@ -1,10 +1,9 @@
 use rusqlite::{params, Connection, Error as RusqliteError, Result};
 use serde::Serialize;
 
-
 pub fn init_db() -> Result<()> {
     let conn = Connection::open("../data/data.db")?;
-    
+
     // User
     conn.execute(
         "CREATE TABLE IF NOT EXISTS User (
@@ -61,7 +60,16 @@ pub fn insert_game(
         "INSERT OR REPLACE INTO Game (
             app_id, name, install_dir, last_updated, last_played, last_owner, manifest, size
         ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
-        params![app_id, name, install_dir, last_updated, last_played, last_owner, manifest, size],
+        params![
+            app_id,
+            name,
+            install_dir,
+            last_updated,
+            last_played,
+            last_owner,
+            manifest,
+            size
+        ],
     )?;
     Ok(())
 }
@@ -78,7 +86,6 @@ pub struct Game {
     pub size: i64,
 }
 
-
 pub fn retrieve_games(user_id: i32) -> Result<Vec<Game>> {
     let conn = Connection::open("../data/data.db")?;
 
@@ -87,7 +94,7 @@ pub fn retrieve_games(user_id: i32) -> Result<Vec<Game>> {
                 g.last_owner, g.manifest, g.size
          FROM Game g
          JOIN User_Games ug ON g.app_id = ug.app_id
-         WHERE ug.user_id = ?1"
+         WHERE ug.user_id = ?1",
     )?;
 
     let games_iter = stmt.query_map(params![user_id], |row| {
@@ -111,7 +118,6 @@ pub fn retrieve_games(user_id: i32) -> Result<Vec<Game>> {
     Ok(games)
 }
 
-
 pub fn create_user(username: &str, profile_picture: Option<&str>) -> Result<bool> {
     let conn = Connection::open("../data/data.db")?;
 
@@ -122,7 +128,7 @@ pub fn create_user(username: &str, profile_picture: Option<&str>) -> Result<bool
 
     match result {
         Ok(rows_inserted) if rows_inserted > 0 => Ok(true), // user created
-        Ok(_) => Ok(false), // no row inserted (rare case)
+        Ok(_) => Ok(false),                                 // no row inserted (rare case)
         Err(RusqliteError::SqliteFailure(err, _))
             if err.code == rusqlite::ErrorCode::ConstraintViolation =>
         {
@@ -142,12 +148,9 @@ pub struct User {
 pub fn get_all_users() -> Result<Vec<User>> {
     let conn = Connection::open("../data/data.db")?;
 
-    let mut result = conn.prepare(
-        "SELECT * from User"
-    )?;
+    let mut result = conn.prepare("SELECT * from User")?;
 
-    
-    let user_iter = result.query_map([],|row| {
+    let user_iter = result.query_map([], |row| {
         Ok(User {
             id: row.get(0)?,
             username: row.get(1)?,
@@ -166,12 +169,9 @@ pub fn get_all_users() -> Result<Vec<User>> {
 pub fn get_all_games() -> Result<Vec<Game>> {
     let conn = Connection::open("../data/data.db")?;
 
-    let mut result = conn.prepare(
-        "SELECT * from Game"
-    )?;
+    let mut result = conn.prepare("SELECT * from Game")?;
 
-    
-    let game_iter = result.query_map([],|row| {
+    let game_iter = result.query_map([], |row| {
         Ok(Game {
             app_id: row.get(0)?,
             name: row.get(1)?,
