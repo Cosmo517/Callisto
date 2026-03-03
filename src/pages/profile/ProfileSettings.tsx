@@ -54,18 +54,6 @@ function ProfileSettings() {
                         <StatCard label="Games in library" value={games.length} />
                     </div>
 
-                    {/* Favorite games — placeholder */}
-                    <div>
-                        <h2 className="text-secondary text-xs font-semibold uppercase tracking-widest mb-2">
-                            Favorite Games
-                        </h2>
-                        <div className="bg-navbar-color border border-secondary/60 rounded-lg px-4 py-8 flex items-center justify-center">
-                            <p className="text-secondary text-sm">
-                                Coming soon — calculated from time played.
-                            </p>
-                        </div>
-                    </div>
-
                 </div>
             </div>
         </div>
