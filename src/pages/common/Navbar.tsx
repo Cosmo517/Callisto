@@ -1,112 +1,62 @@
 import { useNavigate } from 'react-router-dom';
-import { usePage } from '../../common/PageContext';
-import clsx from 'clsx';
 import { useUser } from '../../common/UserContext';
 import { useState } from 'react';
 
 function Navbar() {
     const navigate = useNavigate();
     const { user } = useUser();
-
-    const { page, setPage } = usePage();
-    const [open, setOpen] = useState(false);
-
-    const navigateToPage = (selectedPage: string) => {
-        if (selectedPage === 'library' && page.page != 'library') {
-            navigate('/library');
-            setPage({ page: 'library' });
-        } else if (
-            selectedPage === 'screenshots' &&
-            page.page != 'screenshots'
-        ) {
-            navigate('/screenshots');
-            setPage({ page: 'screenshots' });
-        } else if (selectedPage === 'statistics' && page.page != 'statistics') {
-            navigate('/statistics');
-            setPage({ page: 'statistics' });
-        }
-    };
-
-    const returnToProfileSelect = () => {
-        navigate('/profiles');
-    };
-
-    const navigateToProfileSettings = () => {
-        setPage({ page: 'profile_settings' });
-        navigate('/profile_settings');
-    };
-
-    const navigateToSettings = () => {
-        setPage({ page: 'settings' });
-        navigate('/settings');
-    };
+    const [menuOpen, setMenuOpen] = useState(false);
 
     return (
-        <div className="bg-navbar-color border-b-secondary fixed flex h-18 w-full items-center border text-xl">
-            <div className="flex flex-row gap-6">
-                <button
-                    className={clsx(
-                        'ml-4 cursor-pointer underline-offset-8 hover:underline',
-                        page.page === 'library'
-                            ? 'text-accent-1 underline underline-offset-8'
-                            : 'text-off-white'
-                    )}
-                    onClick={() => navigateToPage('library')}
-                >
-                    Library
-                </button>
-                <button
-                    className={clsx(
-                        'cursor-pointer underline-offset-8 hover:underline',
-                        page.page === 'screenshots'
-                            ? 'text-accent-1 underline underline-offset-8'
-                            : 'text-off-white'
-                    )}
-                    onClick={() => navigateToPage('screenshots')}
-                >
-                    Screenshots
-                </button>
-                <button
-                    className={clsx(
-                        'cursor-pointer underline-offset-8 hover:underline',
-                        page.page === 'statistics'
-                            ? 'text-accent-1 underline underline-offset-8'
-                            : 'text-off-white'
-                    )}
-                    onClick={() => navigateToPage('statistics')}
-                >
-                    Statistics
-                </button>
-            </div>
+        <div className="bg-navbar-color border-b border-secondary fixed flex h-14 w-full items-center px-4 z-50">
+            {/* App name / home */}
+            <button
+                onClick={() => navigate('/library')}
+                className="text-off-white font-bold text-lg tracking-wide cursor-pointer hover:text-accent-1 transition-colors"
+            >
+                Callisto
+            </button>
+
+            {/* User menu */}
             <div className="relative ml-auto">
                 <button
-                    onClick={() => setOpen(!open)}
-                    className="text-off-white hover:text-accent-1 mr-16 cursor-pointer"
+                    onClick={() => setMenuOpen(!menuOpen)}
+                    className="flex items-center gap-2 text-off-white hover:text-accent-1 cursor-pointer transition-colors"
                 >
-                    {user.username}
+                    <div className="bg-primary w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold select-none">
+                        {user.username?.[0]?.toUpperCase() ?? '?'}
+                    </div>
+                    <span className="text-sm">{user.username}</span>
                 </button>
 
-                {open && (
-                    <div className="bg-primary border-secondary absolute right-0 z-50 mt-2 w-48 rounded-md border shadow-lg">
-                        <button
-                            className="text-off-white hover:bg-accent-2 block w-full cursor-pointer px-4 py-2 text-left"
-                            onClick={navigateToProfileSettings}
-                        >
-                            Profile
-                        </button>
-                        <button
-                            className="text-off-white hover:bg-accent-2 block w-full cursor-pointer px-4 py-2 text-left"
-                            onClick={navigateToSettings}
-                        >
-                            Settings
-                        </button>
-                        <button
-                            className="text-off-white hover:bg-accent-2 block w-full cursor-pointer px-4 py-2 text-left"
-                            onClick={returnToProfileSelect}
-                        >
-                            Logout
-                        </button>
-                    </div>
+                {menuOpen && (
+                    <>
+                        <div
+                            className="fixed inset-0 z-40"
+                            onClick={() => setMenuOpen(false)}
+                        />
+                        <div className="bg-primary border border-secondary absolute right-0 z-50 mt-2 w-44 rounded-md shadow-lg overflow-hidden">
+                            <button
+                                className="text-off-white hover:bg-accent-2/40 block w-full cursor-pointer px-4 py-2 text-left text-sm transition-colors"
+                                onClick={() => { setMenuOpen(false); navigate('/profile_settings'); }}
+                            >
+                                Profile
+                            </button>
+                            <button
+                                className="text-off-white hover:bg-accent-2/40 block w-full cursor-pointer px-4 py-2 text-left text-sm transition-colors"
+                                onClick={() => { setMenuOpen(false); navigate('/settings'); }}
+                            >
+                                Settings
+                            </button>
+                            <div className="border-t border-secondary" />
+                            <button
+                                className="text-accent-1 hover:bg-accent-2/40 block w-full cursor-pointer px-4 py-2 text-left text-sm transition-colors"
+                                onClick={() => { setMenuOpen(false); navigate('/profiles'); }}
+                            >
+                                Sign out
+                            </button>
+                        </div>
+                    </>
                 )}
             </div>
         </div>

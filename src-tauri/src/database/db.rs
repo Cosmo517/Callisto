@@ -1,8 +1,98 @@
 use rusqlite::{params, Connection, Error as RusqliteError, Result};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct GameMetadata {
+    pub app_id: i64,
+    pub short_description: String,
+    pub developer: String,
+    pub publisher: String,
+    pub release_date: String,
+    pub genres: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct NewsItem {
+    pub gid: String,
+    pub title: String,
+    pub url: String,
+    pub contents: String,
+    pub date: i64,
+}
+
+pub fn get_cached_metadata(app_id: i64) -> Result<Option<GameMetadata>> {
+    let conn = Connection::open("../data/data.db")?;
+    let result = conn.query_row(
+        "SELECT app_id, short_description, developer, publisher, release_date, genres
+         FROM GameMetadata WHERE app_id = ?1",
+        params![app_id],
+        |row| Ok(GameMetadata {
+            app_id: row.get(0)?,
+            short_description: row.get(1)?,
+            developer: row.get(2)?,
+            publisher: row.get(3)?,
+            release_date: row.get(4)?,
+            genres: row.get(5)?,
+        }),
+    );
+    match result {
+        Ok(m) => Ok(Some(m)),
+        Err(rusqlite::Error::QueryReturnedNoRows) => Ok(None),
+        Err(e) => Err(e),
+    }
+}
+
+pub fn save_metadata(metadata: &GameMetadata) -> Result<()> {
+    let conn = Connection::open("../data/data.db")?;
+    conn.execute(
+        "INSERT OR REPLACE INTO GameMetadata
+         (app_id, short_description, developer, publisher, release_date, genres, fetched_at)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, strftime('%s', 'now'))",
+        params![
+            metadata.app_id, metadata.short_description, metadata.developer,
+            metadata.publisher, metadata.release_date, metadata.genres
+        ],
+    )?;
+    Ok(())
+}
+
+pub fn get_cached_news(app_id: i64) -> Result<Vec<NewsItem>> {
+    let conn = Connection::open("../data/data.db")?;
+    let mut stmt = conn.prepare(
+        "SELECT gid, title, url, contents, date FROM GameNews
+         WHERE app_id = ?1 ORDER BY date DESC",
+    )?;
+    let iter = stmt.query_map(params![app_id], |row| {
+        Ok(NewsItem {
+            gid: row.get(0)?,
+            title: row.get(1)?,
+            url: row.get(2)?,
+            contents: row.get(3)?,
+            date: row.get(4)?,
+        })
+    })?;
+    let mut items = Vec::new();
+    for item in iter {
+        items.push(item?);
+    }
+    Ok(items)
+}
+
+pub fn save_news(app_id: i64, items: &[NewsItem]) -> Result<()> {
+    let conn = Connection::open("../data/data.db")?;
+    for item in items {
+        conn.execute(
+            "INSERT OR REPLACE INTO GameNews (gid, app_id, title, url, contents, date)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+            params![item.gid, app_id, item.title, item.url, item.contents, item.date],
+        )?;
+    }
+    Ok(())
+}
 
 
 pub fn init_db() -> Result<()> {
+    std::fs::create_dir_all("../data").ok();
     let conn = Connection::open("../data/data.db")?;
     
     // User
@@ -42,6 +132,37 @@ pub fn init_db() -> Result<()> {
         (),
     )?;
 
+    // GameMetadata — cached from Steam Store API
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS GameMetadata (
+            app_id INTEGER PRIMARY KEY,
+            short_description TEXT NOT NULL DEFAULT '',
+            developer TEXT NOT NULL DEFAULT '',
+            publisher TEXT NOT NULL DEFAULT '',
+            release_date TEXT NOT NULL DEFAULT '',
+            genres TEXT NOT NULL DEFAULT '',
+            fetched_at INTEGER NOT NULL DEFAULT 0
+        )",
+        (),
+    )?;
+
+    // GameNews — cached from Steam News API
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS GameNews (
+            gid TEXT PRIMARY KEY,
+            app_id INTEGER NOT NULL,
+            title TEXT NOT NULL DEFAULT '',
+            url TEXT NOT NULL DEFAULT '',
+            contents TEXT NOT NULL DEFAULT '',
+            date INTEGER NOT NULL DEFAULT 0
+        )",
+        (),
+    )?;
+
+    // Migrate User_Games to add per-user flags (safe to run on existing DBs)
+    let _ = conn.execute("ALTER TABLE User_Games ADD COLUMN is_favorite INTEGER NOT NULL DEFAULT 0", ());
+    let _ = conn.execute("ALTER TABLE User_Games ADD COLUMN is_hidden INTEGER NOT NULL DEFAULT 0", ());
+
     Ok(())
 }
 
@@ -76,6 +197,8 @@ pub struct Game {
     pub last_owner: String,
     pub manifest: String,
     pub size: i64,
+    pub is_favorite: bool,
+    pub is_hidden: bool,
 }
 
 
@@ -83,8 +206,8 @@ pub fn retrieve_games(user_id: i32) -> Result<Vec<Game>> {
     let conn = Connection::open("../data/data.db")?;
 
     let mut stmt = conn.prepare(
-        "SELECT g.app_id, g.name, g.install_dir, g.last_updated, g.last_played, 
-                g.last_owner, g.manifest, g.size
+        "SELECT g.app_id, g.name, g.install_dir, g.last_updated, g.last_played,
+                g.last_owner, g.manifest, g.size, ug.is_favorite, ug.is_hidden
          FROM Game g
          JOIN User_Games ug ON g.app_id = ug.app_id
          WHERE ug.user_id = ?1"
@@ -100,6 +223,8 @@ pub fn retrieve_games(user_id: i32) -> Result<Vec<Game>> {
             last_owner: row.get(5)?,
             manifest: row.get(6)?,
             size: row.get(7)?,
+            is_favorite: row.get::<_, i32>(8)? != 0,
+            is_hidden: row.get::<_, i32>(9)? != 0,
         })
     })?;
 
@@ -109,6 +234,36 @@ pub fn retrieve_games(user_id: i32) -> Result<Vec<Game>> {
     }
 
     Ok(games)
+}
+
+pub fn toggle_favorite(user_id: i32, app_id: i64) -> Result<bool> {
+    let conn = Connection::open("../data/data.db")?;
+    conn.execute(
+        "UPDATE User_Games SET is_favorite = CASE WHEN is_favorite = 0 THEN 1 ELSE 0 END
+         WHERE user_id = ?1 AND app_id = ?2",
+        params![user_id, app_id],
+    )?;
+    let new_val: i32 = conn.query_row(
+        "SELECT is_favorite FROM User_Games WHERE user_id = ?1 AND app_id = ?2",
+        params![user_id, app_id],
+        |row| row.get(0),
+    )?;
+    Ok(new_val != 0)
+}
+
+pub fn toggle_hidden(user_id: i32, app_id: i64) -> Result<bool> {
+    let conn = Connection::open("../data/data.db")?;
+    conn.execute(
+        "UPDATE User_Games SET is_hidden = CASE WHEN is_hidden = 0 THEN 1 ELSE 0 END
+         WHERE user_id = ?1 AND app_id = ?2",
+        params![user_id, app_id],
+    )?;
+    let new_val: i32 = conn.query_row(
+        "SELECT is_hidden FROM User_Games WHERE user_id = ?1 AND app_id = ?2",
+        params![user_id, app_id],
+        |row| row.get(0),
+    )?;
+    Ok(new_val != 0)
 }
 
 
@@ -136,7 +291,7 @@ pub fn create_user(username: &str, profile_picture: Option<&str>) -> Result<bool
 pub struct User {
     pub id: i32,
     pub username: String,
-    pub profile_picture: String,
+    pub profile_picture: Option<String>,
 }
 
 pub fn get_all_users() -> Result<Vec<User>> {
@@ -147,11 +302,11 @@ pub fn get_all_users() -> Result<Vec<User>> {
     )?;
 
     
-    let user_iter = result.query_map([],|row| {
+    let user_iter = result.query_map([], |row| {
         Ok(User {
             id: row.get(0)?,
             username: row.get(1)?,
-            profile_picture: row.get(2)?,
+            profile_picture: row.get::<_, Option<String>>(2)?,
         })
     })?;
 
@@ -181,6 +336,8 @@ pub fn get_all_games() -> Result<Vec<Game>> {
             last_owner: row.get(5)?,
             manifest: row.get(6)?,
             size: row.get(7)?,
+            is_favorite: false,
+            is_hidden: false,
         })
     })?;
 

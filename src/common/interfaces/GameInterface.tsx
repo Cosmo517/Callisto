@@ -7,4 +7,6 @@ export interface Game {
     last_owner?: string;
     manifest?: string;
     size?: number;
+    is_favorite?: boolean;
+    is_hidden?: boolean;
 }
