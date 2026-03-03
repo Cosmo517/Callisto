@@ -2,8 +2,7 @@ mod database;
 mod metadata;
 use std::fs;
 use std::path::Path;
-use rusqlite::{Result};
-use crate::database::db::add_user_games;
+use rusqlite::Result;
 
 #[tauri::command]
 async fn fetch_game_details(app_id: i64) -> Result<metadata::GameDetails, String> {
@@ -105,7 +104,9 @@ fn onboard_steam(steam_path: String) -> Result<Vec<database::db::Game>, String> 
                                     }
                                 }
 
-                                manifest = "test".to_string();
+                                if let Some(fname) = file_path.file_name() {
+                                    manifest = fname.to_string_lossy().into_owned();
+                                }
 
                                 if !name.is_empty() {
                                     let app_id: i64 = app_id_str.parse::<i64>().unwrap_or(0);
@@ -135,7 +136,6 @@ fn onboard_steam(steam_path: String) -> Result<Vec<database::db::Game>, String> 
                                         game.size,
                                     ).map_err(|e| e.to_string())?;
 
-                                    println!("{:?}", game);
                                     games.push(game);
                                 }
                             }
@@ -152,6 +152,9 @@ fn onboard_steam(steam_path: String) -> Result<Vec<database::db::Game>, String> 
 
 #[tauri::command]
 fn launch_steam_game(app_id: String) -> Result<(), String> {
+    if !app_id.chars().all(|c| c.is_ascii_digit()) {
+        return Err(format!("Invalid app_id: {}", app_id));
+    }
     let uri = format!("steam://launch/{}", app_id);
     
     #[cfg(target_os = "windows")]
@@ -218,10 +221,9 @@ fn tauri_add_user_games(user_id: i32, game_ids: Vec<i32>) -> Result<(), String> 
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    let db_conn = database::db::init_db().expect("failed to init database");
+    database::db::init_db().expect("failed to init database");
 
     tauri::Builder::default()
-    .manage(db_conn)
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .invoke_handler(tauri::generate_handler![detect_steam_path, onboard_steam, launch_steam_game, tauri_create_user, tauri_get_all_users, tauri_retrieve_user_games, tauri_retrieve_all_games, tauri_add_user_games, fetch_game_details, tauri_toggle_favorite, tauri_toggle_hidden])
